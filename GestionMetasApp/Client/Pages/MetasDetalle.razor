@@ -1,0 +1,414 @@
+﻿@if (cargando)
+{
+    <div class="d-flex justify-content-center align-items-center mt-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card w-100" style="max-width: 100vh; overflow-x: auto;">
+        <div class="card-header">
+            <h5 class="card-title">Configurar plan de compensación</h5>
+        </div>
+
+        <div class="card-body w-100">
+
+            <table class="table">
+
+                <thead>
+                    <tr class="divHeader border-bottom-0">
+                        <td colspan="5">
+                            <div>
+                                @{
+                                    bool isActiveAnyCheckbox = tareas.Any(x => x.seleccionado);
+                                }
+                                <button class="btn btn-gestion ml-2 @((SelectedMetaId == 0)?"d-none":"")" @onclick="@(async()=>{await AbrirModalModificarTarea(0);})"><span class="bi bi-plus-lg"></span>&nbsp;&nbsp;Agregar tarea</button>
+                                <button class="btn btn-gestion ml-2 @((!isActiveAnyCheckbox)?"d-none":"")" @onclick="@(async()=>{await AbrirModalCompletarTarea();})"><span class="bi bi-check-circle"></span>&nbsp;&nbsp;Completar tarea</button>
+                                <button class="btn btn-gestion ml-2 @((tareaIdSelected == 0)?"d-none":"")" @onclick="@(async()=>{await AbrirModalModificarTarea(tareaIdSelected);})"><span class="bi bi-pencil-fill"></span>&nbsp;&nbsp;Editar</button>
+                                <button class="btn btn-gestion ml-2 @((!isActiveAnyCheckbox)?"d-none":"")" @onclick="@(async()=>{await AbrirModalEliminarTarea();})"><span class="bi bi-trash-fill"></span>&nbsp;&nbsp;Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <button class="btn btn-outline-secondary d-none" type="submit" @onclick="async()=>{ await CargarInformacion();}" id="busquedabtn" title="Busqueda por texto"></button>
+
+                        <th scope="col">
+                            <div class="d-flex justify-content-center">
+                                <InputCheckbox type="checkbox" @bind-Value="todoSeleccionado" @onclick="SeleccionarTodo" />
+                            </div>
+                        </th>
+                        <th scope="col"></th>
+                        <th scope="col">
+                            <div>
+                                <span class="filtro" @onclick="@(async()=>{ await OrdenarInfo("Tarea"); })">
+                                    Tarea&nbsp;&nbsp;&nbsp;
+                                    <span class="@GetIconClass(TareaFiltro)"></span>
+                                </span>
+                                <input @bind-value="NombreBusqueda" placeholder="Nombre..." @onkeypress="@BuscarConEnter" @bind-value:event="oninput" />
+                            </div>
+                        </th>
+                        <th scope="col">
+                            <div>
+                                <span class="filtro" @onclick="@(async()=>{ await OrdenarInfo("Fecha"); })">
+                                    Fecha&nbsp;&nbsp;&nbsp;
+                                    <span class="@GetIconClass(FechaFiltro)"></span>
+                                </span>
+                                <input @bind-value="FechaBusqueda" type="date" placeholder="dd/mm/aaaa" @bind-value:event="oninput" />
+                                <button type="submit" @onclick="async()=>{ await CargarInformacion();}">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th scope="col">
+                            <div>
+                                <span class="filtro" @onclick="@(async()=>{ await OrdenarInfo("Estado"); })">
+                                    Estado&nbsp;&nbsp;&nbsp;
+                                    <span class="@GetIconClass(EstadoFiltro)"></span>
+                                </span>
+                                <input @bind-value="EstadoBusqueda" placeholder="Estado..." @onkeypress="@BuscarConEnter" @bind-value:event="oninput" />
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                
+                @if (tareas != null && tareas.Count > 0)
+                {
+                    <tbody>
+                        @foreach (var tarea in tareas)
+                        {
+                            <tr class="@((tarea.IdTarea == tareaIdSelected)?"rowSelected":"")" @onclick="@(async()=>{await TareaSeleccionada(tarea.IdTarea);})">
+                                <td>
+                                    <div class="d-flex justify-content-center">
+                                        <InputCheckbox type="checkbox" @bind-Value="tarea.seleccionado" @onclick="@(async()=>{await SeleccionIndividual(tarea.IdTarea);})" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="bi bi-star-fill d-flex justify-content-center @((tarea.Importante)?"starActive":"starInactive")" @onclick="@(async()=>{await MarcarImportante(tarea.IdTarea);})"></span>
+                                </td>
+                                <td>@tarea.Nombre</td>
+                                <td>@(tarea.FechaCreacion.HasValue ? tarea.FechaCreacion.Value.ToString("dd-MM-yyyy") : "No disponible")</td>
+                                <td class="@((tarea.Estado == "Completada")?"taskComplete":"")">@tarea.Estado</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5">
+                                <div class="row divPagination">
+                                    <div class="col-6 d-flex justify-content-start">
+                                        <span class="bi bi-skip-start-fill" @onclick="FirstPage"></span>&nbsp;
+                                        <span class="bi bi-caret-left-fill" @onclick="PreviousPage"></span>&nbsp;
+                                        <span class="numberPagination">@PaginaActual</span>&nbsp;
+                                        <span class="bi bi-caret-right-fill" @onclick="NextPage"></span>&nbsp;
+                                        <span class="bi bi-skip-end-fill" @onclick="LastPage"></span>
+                                    </div>
+                                    <div class="col-6 d-flex justify-content-end">
+                                        <label>@PaginaActual-@MaxPagina de @CantidadRegistros registros</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                }
+                else
+                {
+                    <tbody>
+                        <tr>
+                            <td colspan="5">
+                                <p class="d-flex justify-content-center mt-2">No se encontraron registros.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                }
+
+            </table>
+
+        </div>
+
+    </div>
+}
+
+<AgregarTareaModal @ref="agregarTareaModal" OnSuccess="ActualizarInformacion" />
+
+<EliminarTareaModal @ref="eliminarTareaModal" OnSuccess="ActualizarInformacion"></EliminarTareaModal>
+
+<CompletarTareaModal @ref="completarTareaModal" OnSuccess="ActualizarInformacion"></CompletarTareaModal>
+
+@code {
+    public List<TareaView> tareas = new List<TareaView>();
+    public bool cargando = true;
+    private bool openModalAgregarTarea = false;
+
+    public int tareaIdSelected = 0;
+    public int metaIdSelected = 0;
+
+    public bool todoSeleccionado = false;
+
+    public int CantidadRegistros = 0;
+    public int RegistroPorPagina = 5;
+    public int MaxPagina = 0;
+    public int PaginaActual = 1;
+
+    public int TareaFiltro = 1;
+    public int FechaFiltro = 1;
+    public int EstadoFiltro = 1;
+
+    public string TipoFiltro = string.Empty;
+
+    public string NombreBusqueda = string.Empty;
+    public DateTime? FechaBusqueda = null;
+    public string EstadoBusqueda = string.Empty;
+
+    [Parameter] public EventCallback OnUpdate { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInformacion();
+    }
+
+    public async Task CargarInformacion()
+    {
+        if (SelectedMetaId != 0)
+        {
+            try
+            {
+                var fecha = FechaBusqueda.HasValue ? FechaBusqueda.Value.ToString("dd-MM-yyyy") : null;
+                var resultsTareas = await Http.GetStringAsync("Tarea/Lista/" + SelectedMetaId + "?pagina=" + PaginaActual + "&tamanoPagina=" + RegistroPorPagina + "&Tarea=" + NombreBusqueda + 
+                                                "&Fecha=" + fecha + "&Estado=" + EstadoBusqueda + "&OrdenTarea=" + TareaFiltro + "&OrdenFecha=" + FechaFiltro + "&OrdenEstado=" + EstadoFiltro + "&TipoFiltro=" + TipoFiltro);
+
+                tareas = JsonConvert.DeserializeObject<List<TareaView>>(resultsTareas) ?? new List<TareaView>();
+                if (tareas.Count > 0)
+                {
+                    CantidadRegistros = tareas[0].CantRegistros;
+                    MaxPagina = (int)Math.Ceiling((double)CantidadRegistros / RegistroPorPagina);
+                }
+                todoSeleccionado = false;
+            }
+            catch (Exception ex)
+            {
+                toastService.ShowToast(ToastLevel.Error, "Ha ocurrido un error: " + ex.Message);
+            }
+        }
+        cargando = false;
+    }
+
+    public async Task ActualizarInformacion()
+    {
+        // Llama al método para actualizar la información
+        await CargarInformacion();
+        if (OnUpdate.HasDelegate)
+        {
+            await OnUpdate.InvokeAsync();
+        }
+        StateHasChanged();
+    }
+
+    public async Task TareaSeleccionada(int idTarea)
+    {
+        tareaIdSelected = idTarea;
+    }
+
+    [Parameter] public int SelectedMetaId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedMetaId != 0)
+        {
+            PaginaActual = 1;
+            await CargarInformacion();
+            tareaIdSelected = 0;
+        }
+        else{
+            tareas = new List<TareaView>();
+        }
+    }
+
+    private AgregarTareaModal agregarTareaModal;
+
+    private async Task AbrirModalModificarTarea(int tareaId)
+    {
+        if (agregarTareaModal != null)
+        {
+            await agregarTareaModal.ShowModalAsync(tareaId, SelectedMetaId);
+        }
+    }
+
+    private EliminarTareaModal eliminarTareaModal;
+
+    private async Task AbrirModalEliminarTarea()
+    {
+        if (eliminarTareaModal != null)
+        {
+            await eliminarTareaModal.ShowModalAsync(tareas);
+        }
+    }
+
+    private CompletarTareaModal completarTareaModal;
+
+    private async Task AbrirModalCompletarTarea()
+    {
+        if (completarTareaModal != null)
+        {
+            await completarTareaModal.ShowModalAsync(tareas);
+        }
+    }
+
+    private async Task SeleccionarTodo()
+    {
+        // Verifica si hay al menos una tarea no seleccionada
+        bool hayNoSeleccionados = tareas.Any(x => !x.seleccionado);
+
+        if (hayNoSeleccionados)
+        {
+            // Si hay al menos una tarea no seleccionada, selecciona todas
+            foreach (var tarea in tareas)
+            {
+                tarea.seleccionado = true;
+            }
+            todoSeleccionado = true;
+        }
+        else
+        {
+            // Si todas las tareas están seleccionadas, deselecciona todas
+            foreach (var tarea in tareas)
+            {
+                tarea.seleccionado = false;
+            }
+            todoSeleccionado = false;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task SeleccionIndividual(int tareaId)
+    {
+        var tarea = tareas.FirstOrDefault(x => x.IdTarea == tareaId);
+
+        if (tarea != null)
+        {
+            tarea.seleccionado = !tarea.seleccionado;
+        }
+
+        if (tareas.All(x => x.seleccionado))
+        {
+            todoSeleccionado = true;
+        }
+        else
+        {
+            todoSeleccionado = false;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    public async Task PreviousPage()
+    {
+        if (PaginaActual != 1)
+        {
+            PaginaActual = PaginaActual - 1;
+            await CargarInformacion();
+        }
+    }
+
+    public async Task NextPage()
+    {
+        if (PaginaActual < MaxPagina)
+        {
+            PaginaActual = PaginaActual + 1;
+            await CargarInformacion();
+        }
+    }
+
+    public async Task FirstPage()
+    {
+        PaginaActual = 1;
+        await CargarInformacion();
+    }
+
+    public async Task LastPage()
+    {
+        PaginaActual = MaxPagina;
+        await CargarInformacion();
+    }
+
+    public async Task MarcarImportante(int tareaId)
+    {
+
+        try
+        {
+            var tarea = tareas.FirstOrDefault(x => x.IdTarea == tareaId);
+
+            if (tarea != null)
+            {
+                tarea.Importante = !tarea.Importante;
+            }
+
+            var resultsTareas = await Http.PostAsJsonAsync("Tarea/Importante", tarea);
+
+            await CargarInformacion();
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowToast(ToastLevel.Error, "Ha ocurrido un error: " + ex.Message);
+        }
+
+        StateHasChanged();
+
+    }
+
+    public async Task BuscarConEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await JSRuntime.InvokeVoidAsync("clickElementById", "busquedabtn");
+        }
+    }
+
+    private string GetIconClass(int filtroNumber)
+    {
+        return filtroNumber switch
+        {
+            1 => "bi bi-funnel",
+            2 => "bi bi-sort-down",
+            3 => "bi bi-sort-up-alt",
+            _ => ""
+        };
+    }
+
+    public async Task OrdenarInfo(string tipo)
+    {
+        switch (tipo)
+        {
+            case "Tarea":
+                TareaFiltro++;
+                if (TareaFiltro == 4)
+                {
+                    TareaFiltro = 1;
+                }
+                TipoFiltro = "Tarea";
+                break;
+            case "Fecha":
+                FechaFiltro++;
+                if (FechaFiltro == 4)
+                {
+                    FechaFiltro = 1;
+                }
+                TipoFiltro = "Fecha";
+                break;
+            case "Estado":
+                EstadoFiltro++;
+                if (EstadoFiltro == 4)
+                {
+                    EstadoFiltro = 1;
+                }
+                TipoFiltro = "Estado";
+                break;
+        }
+        await CargarInformacion();
+        StateHasChanged();
+    }
+
+}

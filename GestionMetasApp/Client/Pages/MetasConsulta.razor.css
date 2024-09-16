@@ -1,0 +1,23 @@
+﻿
+.card-header {
+    background-color: transparent;
+}
+
+.card-body {
+    padding: 5px !important;
+    cursor: pointer;
+    background-color: #ffff;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.card-body > span{
+    display: block;
+}
+
+.card-body-active {
+        background-color: #F5F5F5;
+}

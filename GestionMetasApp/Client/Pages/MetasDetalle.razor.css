@@ -1,0 +1,76 @@
+﻿.card-header {
+    background-color: #336658;
+    color: white;
+}
+
+
+th > div > span {
+    display: block;
+}
+
+.divHeader {
+    border: 1px solid #336658;
+    padding: .5rem;
+    background-color: #ffff;
+}
+
+.numberPagination {
+    background-color: #336658;
+    color: white;
+    width: 25px;
+    text-align: center;
+}
+
+.starInactive {
+    color: darkgray;
+    cursor: pointer;
+}
+
+.starActive {
+    color: #F4B80E;
+    cursor: pointer;
+}
+
+.taskComplete {
+    color: #336658 !important;
+    font-weight: bold;
+}
+
+.divPagination span {
+    cursor: pointer;
+}
+
+table input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.rowSelected {
+    background-color: #C2DBFF !important;
+}
+
+td{
+    border-left: 1px solid white;
+    border-right: 1px solid white;
+}
+
+.table {
+    border: 1px solid #336658 !important;
+    margin-bottom: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-bottom: 0 !important;
+    width: 100%; /* Asegúrate de que la tabla ocupe el 100% del espacio */
+    display: table; /* Asegura que el div se alinee con la tabla */
+}
+
+tr td:first-child {
+    border-left: none;
+}
+
+tr td:last-child {
+    border-right: none;
+}
+
+thead {
+    background-color: #A4B7B7;
+}

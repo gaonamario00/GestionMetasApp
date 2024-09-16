@@ -1,0 +1,144 @@
+﻿@if (cargando)
+{
+    <div class="d-flex justify-content-center align-items-center mt-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card w-100" style="max-height: 100vh; overflow-y: auto;">
+        <div class="card-header">
+            <button class="btn btn-gestion" @onclick="@(async()=>{await AbrirModalModificarMeta(0);})"><span class="bi bi-plus-lg"></span>&nbsp;Nueva meta</button>
+        </div>
+
+        @if (metas != null && metas.Count > 0)
+        {
+            @foreach (var meta in metas)
+            {
+                <div class="card-body @((metaIdSelected==meta.IdMeta)?"card-body-active":"")" @onclick="@(async()=>{await MetaSeleccionada(meta.IdMeta);})">
+                    <div class="row">
+                        <div class="col-9">
+                            <h5 class="card-title">@meta.Nombre</h5>
+                        </div>
+                        <div class="col-3 d-flex justify-content-end">
+                            <span class="bi bi-pencil-fill modificar" @onclick="@(async()=>{await AbrirModalModificarMeta(meta.IdMeta);})"></span>&nbsp;&nbsp;
+                            <span class="bi bi-trash eliminar" @onclick="@(async()=>{await AbrirModalEliminarMeta(meta.IdMeta);})"></span>
+                        </div>
+                    </div>
+                    <p class="card-text">Fecha de creación: @(meta.Fechacreacion.HasValue ? meta.Fechacreacion.Value.ToString("dd-MM-yyyy") : "No disponible")</p>
+                    @{
+                        var porcentaje = meta.Porcentaje.HasValue ? meta.Porcentaje.Value.ToString("N2") : "0";
+                    }
+
+                    <div class="row">
+                        <div class="col-10">
+                            <span>Tareas completadas: @meta.TareasCompletadas/@meta.TotalTareas</span>
+                        </div>
+                        <div class="col-2">
+                            <span>@porcentaje%</span>
+                        </div>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: @porcentaje%;" aria-valuenow="@porcentaje" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            }
+
+        }
+        else
+        {
+            <p class="d-flex justify-content-center mt-2">No hay metas por ahora. Para comenzar agrega una nueva meta.</p>
+        }
+
+    </div>
+}
+
+<AgregarMetaModal @ref="agregarMetaModal" OnSuccess="ActualizarInformacion" />
+
+<EliminarMetaModal @ref="eliminarMetaModal" OnSuccess="ActualizarInformacion"></EliminarMetaModal>
+
+@code {
+
+    public List<MetaView> metas = new List<MetaView>();
+    public bool cargando = true;
+    private bool openModalAgregarMeta = false;
+
+    public int metaIdSelected = 0;
+
+    [Parameter] public EventCallback<int> OnMetaSelected { get; set; }
+    [Parameter] public EventCallback OnUpdate { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInformacion();
+        if (metas.Count > 0)
+        {
+            metaIdSelected = metas.First().IdMeta;
+            await OnMetaSelected.InvokeAsync(metaIdSelected);
+        }
+    }
+
+    public async Task CargarInformacion()
+    {
+        try
+        {
+            var resultsMetas = await Http.GetStringAsync("Meta/Lista");
+            metas = JsonConvert.DeserializeObject<List<MetaView>>(resultsMetas) ?? new List<MetaView>();
+
+            if (metas.Count > 0)
+            {
+                var meta = metas.Where(x => x.IdMeta == metaIdSelected).FirstOrDefault();
+
+                if (meta == null)
+                {
+                    await MetaSeleccionada(metas.FirstOrDefault().IdMeta);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowToast(ToastLevel.Error, "Ha ocurrido un error: " + ex.Message);
+        }
+        cargando = false;
+    }
+
+    public async Task ActualizarInformacion()
+    {
+        // Llama al método para actualizar la información
+        await CargarInformacion();
+        StateHasChanged();
+    }
+
+    public async Task MetaSeleccionada(int idMeta)
+    {
+        if (metaIdSelected != idMeta)
+        {
+            metaIdSelected = idMeta;
+            await OnMetaSelected.InvokeAsync(metaIdSelected);
+        }
+    }
+
+    private AgregarMetaModal agregarMetaModal;
+
+    private async Task AbrirModalModificarMeta(int metaId)
+    {
+        if (agregarMetaModal != null)
+        {
+            await agregarMetaModal.ShowModalAsync(metaId);
+        }
+    }
+
+    private EliminarMetaModal eliminarMetaModal;
+
+    private async Task AbrirModalEliminarMeta(int metaId)
+    {
+        if (eliminarMetaModal != null)
+        {
+            await eliminarMetaModal.ShowModalAsync(metaId);
+        }
+    }
+
+}

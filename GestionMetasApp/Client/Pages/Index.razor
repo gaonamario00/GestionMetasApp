@@ -1,0 +1,66 @@
+﻿@page "/"
+
+<div class="grid-container">
+    <div class="componentStyleBg grid-item left-column">
+        <MetasConsulta @ref="metasConsulta" OnMetaSelected="HandleMetaSelected" OnUpdate="ActualizarMetasDetalle"></MetasConsulta>
+    </div>
+
+    <div class="componentStyleBg grid-item right-column">
+        <MetasDetalle @ref="metasDetalle" SelectedMetaId="selectedMetaId" OnUpdate="ActualizarMetasConsulta"></MetasDetalle>
+    </div>
+</div>
+
+
+<script>
+
+// Función para abrir el modal
+function openModal(modalId) {
+    $(modalId).modal('show');
+}
+
+// Función para cerrar el modal
+function closeModal(modalId) {
+    $(modalId).modal('hide');
+}
+
+window.clickElementById = function (elementId) {
+   var element = document.getElementById(elementId);
+       if (element) {
+           element.click();
+        }
+}
+
+</script>
+
+
+@code {
+    private int selectedMetaId;
+
+    private void HandleMetaSelected(int metaId)
+    {
+        selectedMetaId = metaId;
+        // ActualizarMetasDetalle();
+    }
+
+    private MetasConsulta metasConsulta;
+
+    private async Task ActualizarMetasConsulta()
+    {
+        // Llama al método ActualizarInformacion de MetasConsulta
+        if (metasConsulta != null)
+        {
+            await metasConsulta.ActualizarInformacion();
+        }
+    }
+
+    private MetasDetalle metasDetalle;
+
+    public async Task ActualizarMetasDetalle()
+    {
+        if (metasDetalle != null)
+        {
+            await metasDetalle.ActualizarInformacion();
+        }
+    }
+
+}

@@ -1,0 +1,18 @@
+﻿@using Blazored.Toast
+@inherits LayoutComponentBase
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-3">
+            <h4 class="text-start">Control de metas</h4>
+        </div>
+
+        <article class="px-3">
+            @Body
+        </article>
+    </main>
+    <BlazoredToasts Timeout="3" />
+</div>

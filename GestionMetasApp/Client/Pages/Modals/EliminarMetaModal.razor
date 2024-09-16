@@ -1,0 +1,105 @@
+﻿
+<div class="modal fade" id="EliminarMeta" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¿Está seguro?</h5>
+                <button class="boton-cerrar" @onclick="Cancelar">
+                    <span class="bi bi-x-lg"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="nombre" class="me-2">Que desea eliminar el elemento "@meta.Nombre"</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center align-items-center">
+                <button type="button" class="btn btn-gestion mr-4" @onclick="Aceptar">Aceptar</button>
+                <button type="button" class="btn btn-light ml-4" @onclick="Cancelar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public MetaMod meta = new MetaMod();
+
+    [Parameter] public EventCallback OnSuccess { get; set; }
+
+    public async Task CargarInformacion()
+    {
+        try
+        {
+            var resultsMeta = await Http.GetStringAsync("Meta/Obtener/" + meta.IdMeta);
+            meta = JsonConvert.DeserializeObject<MetaMod>(resultsMeta) ?? new MetaMod();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowToast(ToastLevel.Error, "Ha ocurrido un error: " + ex.Message);
+        }
+
+    }
+
+    public async Task ShowModalAsync(int metaId)
+    {
+        if (metaId == 0)
+        {
+            meta = new MetaMod();
+        }
+        else
+        {
+            meta.IdMeta = metaId;
+            await CargarInformacion();
+        }
+        StateHasChanged();
+        await JSRuntime.InvokeVoidAsync("openModal", "#EliminarMeta");
+    }
+
+    public async Task HideModalAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("closeModal", "#EliminarMeta");
+    }
+
+    MetasConsulta metasConsulta;
+
+    private async Task Aceptar()
+    {
+        try
+        {
+            var resultsMetas = await Http.DeleteAsync("Meta/Eliminar/"+meta.IdMeta);
+
+            // Obtener el mensaje de error del cuerpo de la respuesta
+            var message = await resultsMetas.Content.ReadAsStringAsync();
+
+            if (!resultsMetas.IsSuccessStatusCode)
+            {
+                // Lanzar una excepción con el mensaje de error
+                throw new Exception(message);
+            }
+
+            if (OnSuccess.HasDelegate)
+            {
+                await OnSuccess.InvokeAsync();
+            }
+
+            await HideModalAsync();
+
+            toastService.ShowSuccess(message);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowToast(ToastLevel.Error, "Ha ocurrido un error: " + ex.Message);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task Cancelar()
+    {
+        await HideModalAsync();
+    }
+}
